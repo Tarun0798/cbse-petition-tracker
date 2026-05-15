@@ -5,6 +5,9 @@ on:
     - cron: '0 * * * *'  # Runs automatically at the start of every hour
   workflow_dispatch:     # Enables an override button to trigger manually anytime
 
+permissions:
+  contents: write
+
 jobs:
   track-and-save:
     runs-on: ubuntu-latest
