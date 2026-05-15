@@ -36,27 +36,37 @@ def update_database(current_count):
     file_name = "petition_data.csv"
     file_exists = os.path.isfile(file_name)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    growth = 0
     
-    last_count = current_count
     if file_exists:
         with open(file_name, "r") as f:
             lines = list(csv.reader(f))
             if len(lines) > 1:
-                # Reference previous total to measure velocity change
+                # Calculate growth since the absolute last check (5 mins ago)
                 last_count = int(lines[-1][1])
+                growth = current_count - last_count
                 
-    hourly_growth = current_count - last_count
-    
     with open(file_name, "a", newline="") as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(["Timestamp", "Total Signatures", "Hourly Growth"])
-        writer.writerow([timestamp, current_count, hourly_growth])
+            writer.writerow(["Timestamp", "Total Signatures", "Interval Growth"])
+        writer.writerow([timestamp, current_count, growth])
 
 if __name__ == "__main__":
-    count = get_signatures()
-    if count:
-        update_database(count)
-        print(f"Database successfully synced. Current total: {count}")
-    else:
-        print("Data extraction failed during this run interval.")
+    import time
+    
+    # 300 seconds equals exactly 5 minutes
+    INTERVAL_SECONDS = 300 
+    
+    print("Real-time engine configured for 5-minute polling cycles... Press Ctrl+C to stop.")
+    
+    while True:
+        count = get_signatures()
+        if count:
+            update_database(count)
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Live Sync Tracker | Current Count: {count}")
+        else:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Data check skipped or page content unavailable.")
+            
+        # Pause execution for 5 minutes before checking again
+        time.sleep(INTERVAL_SECONDS)
